@@ -1,0 +1,56 @@
+{% extends 'base_generic.html' %} <!-- Replace with your base template if it's differently named -->
+
+{% block content %}
+<style>
+    .info-container {
+        background-color: rgba(255, 255, 255, 0.95); /* Semi-transparent white */
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .info-container h2, .info-container p {
+        color: #333; /* Dark grey color for text */
+    }
+    .info-container a {
+        text-decoration: none;
+        color: white;
+    }
+    .info-container a.btn-primary {
+        background-color: #007bff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+    .info-container a.btn-primary:hover {
+        background-color: #0056b3;
+    }
+    .genre-list {
+        list-style-type: disc; /* Add bullets to list items */
+        padding-left: 20px; /* Add padding for the bullet list */
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="info-container">
+        <h2>Personal Information</h2>
+        <!-- Display user information here -->
+        <p>Username: {{ user.username }}</p>
+        <p>Email: {{ user.email }}</p>
+        <p>First Name: {{ user.first_name }}</p>
+        <p>Last Name: {{ user.last_name }}</p>
+        
+        <!-- Display preferred genres -->
+        <h3>Preferred Genres:</h3>
+        <ul class="genre-list">
+            {% for genre in preferred_genres %}
+            <li>{{ genre.name }}</li>
+            {% empty %}
+            <li>No preferred genres set.</li>
+            {% endfor %}
+        </ul>
+
+        <a href="{% url 'edit_user_info' %}" class="btn btn-primary">Edit Personal Information</a>
+    </div>
+</div>
+{% endblock %}

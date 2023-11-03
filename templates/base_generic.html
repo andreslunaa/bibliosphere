@@ -1,0 +1,183 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Library{% endblock title %}</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background-image: url("{% static 'library_wallpaper.png' %}");
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-position: center center;
+        }
+
+        body::before {
+            content: "";
+            background-image: inherit;
+            opacity: 0.7;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            position: absolute;
+            z-index: -1;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+        }
+
+        .navbar {
+            background-color: black;
+        }
+
+        .navbar a, .navbar button {
+            color: white;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            width: auto !important;
+            max-width: 340px !important;
+            padding: 5px 10px !important;
+        }
+
+        .genre-label {
+            color: white;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            display: inline-block;
+        }
+
+        .book-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .book-item {
+            width: 200px;
+            height: 350px;
+            overflow: hidden;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid #ffffff;
+            padding: 10px;
+            text-align: center;
+            transition: transform .3s;
+        }
+
+        .book-item h5, .book-item p {
+            font-size: 0.9em;
+            width: 90%;
+            margin: 5px auto;
+            line-height: 1.2;
+        }
+
+        .book-item:hover {
+            transform: scale(1.05);
+        }
+
+        .book-img {
+            max-width: 100%;
+            height: 250px;
+        }
+
+        .nav-link.btn-primary,
+        .nav-link.btn-danger,
+        .nav-link.btn-success {
+            color: #ffffff !important;
+        }
+        .navbar .dropdown-menu {
+            background-color: rgb(0, 0, 0); /* Set the background color */
+        }
+
+        .navbar .dropdown-menu a {
+            color: rgb(255, 255, 255); /* Set the text color */
+        }
+
+        .navbar .dropdown-menu a:hover {
+            background-color: #01883e; /* Bootstrap primary color for the background on hover */
+            color: white; /* Set the text color to white on hover */
+        }
+        .book-detail-container {
+            background-color: rgba(255, 255, 255, 0.8); /* Ensure readability on top of wallpaper */
+            /* Add other styles if needed */
+        }
+
+        /* Add additional styles that don't conflict with those in the child templates */
+    </style>
+    
+    {% block custom_css %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <div class="row w-100 align-items-center">
+                <!-- Bibliosphere label -->
+                <div class="col-auto">
+                    <a class="navbar-brand" href="{% url 'home' %}">Bibliosphere</a>
+                </div>
+                
+                <!-- Search bar and button -->
+                <div class="col">
+                    <form class="form-inline w-100" method="get" action="{% url 'home' %}">
+                        <input class="form-control search-input" type="text" name="search" placeholder="Search for a book...">
+                        <button class="btn btn-outline-success ml-2" type="submit">Search</button>
+                    </form>
+                </div>
+    
+                <!-- Conditional buttons -->
+                <div class="col-auto">
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav ml-auto">
+                            {% if user.is_authenticated %}
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-toggle="dropdown" aria-expanded="false">
+                                    User Settings
+                                </a>
+                                <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+                                    <a class="dropdown-item" href="{% url 'saved_information' %}">View Saved Information</a>
+                                    <a class="dropdown-item" href="{% url 'preferred_genres' %}">Add Preferred Genres</a>
+                                    <a class="dropdown-item" href="{% url 'drop_preferred_genres' %}">Drop Preferred Genres</a>
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="btn btn-danger nav-link" href="/signout">Sign Out</a>
+                            </li>
+                            {% else %}
+                            <li class="nav-item">
+                                <a class="btn btn-primary nav-link" href="/signin">Sign In</a>
+                            </li>
+                            <li class="nav-item ml-2">
+                                <a class="btn btn-success nav-link" href="/signup">Sign Up</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}
+
+    {% endblock content %}
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    {% block custom_js %}{% endblock %}
+</body>
+</html>

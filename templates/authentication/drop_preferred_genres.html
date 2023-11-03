@@ -1,0 +1,55 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<style>
+    .preferences-container {
+        background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background */
+        padding: 20px;
+        border-radius: 10px;
+        margin-top: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow for depth */
+        max-width: 600px; /* Limit the width for better structure */
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .genre-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsive grid */
+        gap: 15px; /* Space between items */
+    }
+    .form-check {
+        display: flex;
+        align-items: center; /* Vertically center the checkbox and label */
+    }
+    .form-check-input {
+        margin-right: 10px; /* Space out the checkbox from the label */
+    }
+    .form-check-label {
+        margin-bottom: 0; /* Remove bottom margin from labels */
+    }
+    .btn-update {
+        display: block; /* Make the button a block to fill the width */
+        width: 100%; /* Full width */
+        margin-top: 20px; /* Space above the button */
+    }
+</style>
+
+<div class="preferences-container">
+    <h2>Uncheck Undesired Genres</h2>
+    <form method="post" action="{% url 'drop_preferred_genres' %}">
+        {% csrf_token %}
+        <div class="genre-grid">
+            
+            {% for genre_id, genre_name in preferred_genres %}
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="preferred_genres" value="{{ genre_id }}" id="genre_{{ genre_id }}" checked>
+                <label class="form-check-label" for="genre_{{ genre_id }}">
+                    {{ genre_name }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+        <button type="submit" class="btn btn-primary btn-update">Update</button>
+    </form>
+</div>
+{% endblock %}
