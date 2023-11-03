@@ -1,0 +1,69 @@
+{% extends 'base_generic.html' %} <!-- Use your base template here -->
+
+{% block content %}
+<!-- Display messages -->
+{% if messages %}
+<div class="alert-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="edit-user-container">
+    <h1>Edit User Information</h1>
+    <form method="post" action="{% url 'edit_user_info' %}">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" class="form-control" value="{{ user.username }}" placeholder="Enter new username">
+        </div>
+        <div class="form-group">
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name" class="form-control" value="{{ user.first_name }}" placeholder="Enter new first name">
+        </div>
+        <div class="form-group">
+            <label for="last_name">Last Name:</label>
+            <input type="text" id="last_name" name="last_name" class="form-control" value="{{ user.last_name }}" placeholder="Enter new last name">
+        </div>
+        <button type="submit" class="btn btn-primary">Update Information</button>
+    </form>
+</div>
+
+<style>
+    .alert-container {
+        margin-bottom: 20px;
+    }
+    .edit-user-container {
+        background-color: #f9f9f9; /* Light gray background */
+        padding: 20px;
+        border-radius: 5px;
+    }
+    .edit-user-container h1 {
+        margin-bottom: 20px;
+    }
+    .form-group {
+        margin-bottom: 15px;
+    }
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0 22px 0;
+        display: inline-block;
+        border: none;
+        background: #f1f1f1;
+    }
+    .btn-primary {
+        color: #fff;
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+    .btn-primary:hover {
+        color: #fff;
+        background-color: #0056b3;
+        border-color: #0056b3;
+    }
+</style>
+{% endblock %}

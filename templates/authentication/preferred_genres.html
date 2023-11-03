@@ -1,0 +1,80 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<style>
+    .container {
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 8px;
+        padding: 20px;
+        margin-top: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .genre-checkboxes {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+    }
+    .form-check-label {
+        display: block;
+        margin-left: 0;
+    }
+    .form-check-input {
+        margin-right: 5px;
+    }
+    .search-container {
+        text-align: center; /* Center the search form and label */
+        margin-bottom: 20px; /* Add some space between search and the checkboxes */
+    }
+</style>
+<div class="container">
+
+    <h2>Add Your Preferred Genre</h2>
+
+    <div class="search-container">
+        <label for="genre-search"> Search here:</label>
+        <form method="get" action="{% url 'search_genres2' %}" id="genre-search-form">
+            <input type="text" name="search_term" id="genre-search" placeholder="Search Genres">
+            <input type="submit" value="Search">
+        </form>
+    </div>
+
+    
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script type="text/javascript">
+    document.getElementById('genre-search').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        if (!searchTerm) {
+            document.getElementById('search-results').innerHTML = '';
+            return;
+        }
+
+        fetch(`/search_genres/?term=${encodeURIComponent(searchTerm)}`)
+            .then(response => response.json())
+            .then(data => {
+                const form = document.getElementById('genre-form');
+                const genreCheckboxes = form.querySelector('.genre-checkboxes');
+                genreCheckboxes.innerHTML = ''; // Clear existing checkboxes
+
+                data.forEach(genre => {
+                    const checked = user_preferred_genre_ids.includes(genre.id) ? 'checked' : '';
+                    genreCheckboxes.innerHTML += `
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="preferred_genres"
+                                   id="genre${genre.id}" value="${genre.id}" ${checked}>
+                            <label class="form-check-label" for="genre${genre.id}">
+                                ${genre.name}
+                            </label>
+                        </div>
+                    `;
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    });
+</script>
+{% endblock %}

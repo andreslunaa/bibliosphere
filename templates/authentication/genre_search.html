@@ -1,0 +1,48 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<style>
+    /* Base styles */
+    .search-results {
+        background-color: #fff; 
+        color: #000; /* Basic text color */
+        padding: 20px;
+        border-radius: 8px;
+        max-width: 600px;
+        margin: 20px auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .genre-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* Responsive grid layout */
+        gap: 10px; /* Space between grid items */
+    }
+    .genre-label {
+        display: flex;
+        align-items: center;
+        background: #f2f2f2; /* Light background for genre items */
+        padding: 5px;
+        border-radius: 5px;
+        margin-bottom: 5px; /* Space between rows */
+        color: #333; /* Label text color - change as needed */
+    }
+    .genre-label input {
+        margin-right: 10px; /* Space between checkbox and label text */
+    }
+</style>
+
+<div class="search-results">
+    <form method="post">
+        {% csrf_token %}
+        <div class="genre-grid">
+            {% for genre in matching_genres %}
+                <label class="genre-label">
+                    <input type="checkbox" name="genre_ids" value="{{ genre.id }}">
+                    {{ genre.name }}
+                </label>
+            {% endfor %}
+        </div>
+        <input type="submit" value="Save" class="btn btn-primary mt-3">
+    </form>
+</div>
+{% endblock %}
