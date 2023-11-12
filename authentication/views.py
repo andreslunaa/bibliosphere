@@ -447,10 +447,6 @@ def add_comment(request, book_id):
         return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
     return redirect('signin')
 
-
-def nada():
-    pass
-
 @login_required
 def user_comments(request):
     comments = Comment.objects.filter(user=request.user).order_by('-created_at')
@@ -458,3 +454,6 @@ def user_comments(request):
         'comments': comments
     }
     return render(request, 'authentication/user_comments.html', context)
+
+
+
