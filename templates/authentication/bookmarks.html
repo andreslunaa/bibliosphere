@@ -1,0 +1,23 @@
+
+{% extends 'base_generic.html' %}
+
+{% block content %}
+    <div class="container" style="background-color: rgba(255, 255, 255, 0.8); padding: 20px; border-radius: 15px; margin-top: 20px;">
+        <h2 style="text-align: center; color: #333;">My Bookmarks</h2>
+        {% if bookmarks %}
+            <ul class="bookmarks-list" style="list-style: none; padding: 0;">
+                {% for bookmark in bookmarks %}
+                    <li style="background-color: #f9f9f9; margin-bottom: 10px; padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h3 style="margin-top: 0; color: #007bff;">{{ bookmark.book.title }}</h3>
+                        <p style="margin-bottom: 5px; color: #555;">Author: <strong>{{ bookmark.book.author }}</strong></p>
+                        <p style="margin-bottom: 10px; color: #555;">Genre: <em>{{ bookmark.book.genres.all|join:", " }}</em></p>
+                        <a href="{% url 'book_detail' bookmark.book.id %}" style="text-decoration: none; color: white; background-color: #28a745; padding: 10px 15px; border-radius: 5px; margin-right: 10px;">View Details</a>
+                        <a href="{% url 'remove_bookmark' bookmark.book.id %}?next={{ request.path }}" style="text-decoration: none; color: white; background-color: #dc3545; padding: 10px 15px; border-radius: 5px;">Unbookmark</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="text-align: center; color: #666;">You have no bookmarks.</p>
+        {% endif %}
+    </div>
+{% endblock %}

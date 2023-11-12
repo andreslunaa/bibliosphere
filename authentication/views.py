@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.contrib.sites.shortcuts import get_current_site
+from django.contrib.auth.decorators import login_required
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 
@@ -10,54 +11,44 @@ from django.contrib import messages
 from django.core.mail import send_mail, EmailMessage
 
 from . tokens import generater_token
-from . import views
 from bibliosphere import settings
 
-from .models import Book, UserProfile, Genre
+from .models import Book, UserProfile, Genre, Bookmark, Comment, Rating
 import random
-from django.db.models import Subquery
-from django.http import JsonResponse
 from django.db import IntegrityError
+from .web_crawl import WebCrawl_Search
+from django.db.models import Avg
+
+from django.http import HttpResponseRedirect
 # --------------------------------------------------------------------------------
 
 def home(request):
+    """
+    Renders the home page of the website with a list of books based on the user's preferred genres or search query.
+
+    Args:
+        request (HttpRequest): The HTTP request object.
+
+    Returns:
+        HttpResponse: Rendered home page with a list of books.
+    """
     query = request.GET.get('search')
     books_by_genre = {}
-    available_genres = list(Genre.objects.values_list('name', flat=True))
 
     if query:
         books = Book.objects.filter(title__icontains=query)
         return render(request, 'authentication/index.html', {'books': books})
+
+    if request.user.is_authenticated:
+        user_profile = UserProfile.objects.get(user=request.user)
+        selected_genres = list(user_profile.preferred_genres.values_list('name', flat=True))
     else:
-        # Determine the genres to display
-        if request.user.is_authenticated:
-            user_profile = UserProfile.objects.get(user=request.user)
-            selected_genres = list(user_profile.preferred_genres.values_list('name', flat=True))
-            
-            # Fill up with random genres if less than 5 preferred genres
-            random.shuffle(available_genres)
-            for genre in available_genres:
-                if len(selected_genres) >= 5:
-                    break
-                if genre not in selected_genres:
-                    selected_genres.append(genre)
-        else:
-            # Select 5 random genres for non-authenticated users
-            random.shuffle(available_genres)
-            selected_genres = available_genres[:5]
-        
-        # Get 7 random books for each genre
-        for genre_name in selected_genres:
-            # Get Books in the current genre
-            genre_books_qs = Book.objects.filter(genres__name=genre_name)
+        selected_genres = random.sample(list(Genre.objects.values_list('name', flat=True)), 5)
 
-            # Get 7 random books IDs
-            random_books_ids = genre_books_qs.order_by('?').values('id')[:7]
+    genre_books = Book.objects.filter(genres__name__in=selected_genres).order_by('?')
+    for genre_name in selected_genres:
+        books_by_genre[genre_name] = genre_books.filter(genres__name=genre_name)[:7]
 
-            # Get the actual Book objects for the collected IDs
-            genre_books = Book.objects.filter(id__in=Subquery(random_books_ids))
-
-            books_by_genre[genre_name] = genre_books
 
     return render(request, 'authentication/index.html', {'books_by_genre': books_by_genre})
 
@@ -91,11 +82,9 @@ def signup(request):
 
         try:
             # Create a user using the User model
-            user = User.objects.create_user(username, email, password)
-            user.first_name = fname
-            user.last_name = lname
-            user.is_active = False
+            user = User.objects.create_user(username=username, email=email, password=password, first_name=fname, last_name=lname, is_active=False)
             user.save()
+
 
             # Create a UserProfile for the created User
             user_profile = UserProfile(user=user)
@@ -141,43 +130,40 @@ def signup(request):
     return render(request, 'authentication/signup.html', {'genres': genres})
 
 def signin(request):
+    """
+    Handles the user login functionality.
+
+    Args:
+        request (object): The HTTP request object containing the user's login information.
+
+    Returns:
+        None: The function either logs in the user and renders the home page or redirects the user to the home page with an error message.
+    """
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('pass1')
         user = authenticate(username=username, password=password)
-        
 
         if user is not None:
             login(request, user)
-            #find books based on liked genres! --> important for the future!!!!!
             books_by_genre = find_books(request)
-            return render(request,'authentication/index.html', {'books_by_genre': books_by_genre})
+            return render(request, 'authentication/index.html', {'books_by_genre': books_by_genre})
         else:
             messages.error(request, "Invalid Credentials!")
             return redirect('home')
-    return render(request,'authentication/signin.html')
+
+    return render(request, 'authentication/signin.html')
 
 def signout(request):
-    #usname = request.user.username
-    #set_genres(usname)
     logout(request)
     messages.success(request, "You have been successfully signed out!")
     return redirect('home')
 
 def find_books(request):
-    books = []
     books_by_genre = {}
-    available_genres = ['Adventure', 'Classic', 'Thriller', 'Romance', 'Science Fiction', 'Mystery', 'Fantasy', 'History']
-
     # Get preferred_genres from UserProfile
     user_profile = UserProfile.objects.get(user=request.user)
     selected_genres = list(user_profile.preferred_genres.values_list('name', flat=True))
-    
-    # If selected genres are less than 5, fill up with random genres from the available list
-    while len(selected_genres) < 5:
-        random_genre = random.choice(available_genres)
-        if random_genre not in selected_genres:
-            selected_genres.append(random_genre)
 
     for genre in selected_genres:
         genre_books = Book.objects.filter(genres__name__icontains=genre).order_by('?')[:7]
@@ -260,13 +246,6 @@ def preferred_genres(request):
     context['common_genres'] = common_genres_qs
     return render(request, 'authentication/preferred_genres.html', context)
 
-def search_genres(request):
-    if 'term' in request.GET:
-        qs = Genre.objects.filter(name__icontains=request.GET.get('term'))
-        genres = list(qs.values('id', 'name'))
-        return JsonResponse(genres, safe=False)
-    return JsonResponse([], safe=False)
-
 def search_and_select_genres(request):
     if request.method == 'POST':
         # Fetch the user profile
@@ -292,7 +271,6 @@ def search_and_select_genres(request):
         'matching_genres': matching_genres,
         'search_term': search_term
     })
-
 
 def drop_preferred_genres(request):
 
@@ -359,5 +337,120 @@ def edit_user_info(request):
 
 def book_detail(request, book_id):
     book = get_object_or_404(Book, pk=book_id)
-    print (book.title)
-    return render(request, 'authentication/book_detail.html', {'book': book})
+    is_bookmarked = False
+    links = None
+
+    # Web crawl functionality (should be accessible to all users)
+    query = book.title
+    webcrawl = WebCrawl_Search()
+    webcrawl_links = webcrawl.search(query)
+    if webcrawl_links:
+        links = webcrawl.base_url + webcrawl_links[0]
+
+    # Process awards, characters, setting (accessible to all users)
+    for attr in ['awards', 'characters', 'setting']:
+        attr_value = getattr(book, attr, '')
+        if attr_value:
+            if attr == 'awards':
+                # Specific processing for awards
+                awards_str = attr_value.strip("[]")
+                awards_list = [award.strip().strip("'\"") for award in awards_str.split(',')]
+                setattr(book, attr, [award for award in awards_list if award])
+            else:
+                # General processing for characters and setting
+                clean_str = attr_value.strip("[]").replace("'", "")
+                setattr(book, attr, clean_str)
+        else:
+            setattr(book, attr, 'None')
+
+    # Fetch comments (accessible to all users)
+    comments = Comment.objects.filter(book=book).order_by('-created_at')
+    average_rating = Rating.objects.filter(book=book).aggregate(Avg('rating'))['rating__avg']
+
+    # Check bookmark status only if user is authenticated
+    if request.user.is_authenticated:
+        is_bookmarked = Bookmark.objects.filter(user=request.user, book=book).exists()
+
+    context = {
+        'book': book,
+        'links': links,
+        'comments': comments,
+        'average_rating': average_rating,
+        'is_bookmarked': is_bookmarked
+    }
+
+    return render(request, 'authentication/book_detail.html', context)
+
+def add_rating(request, book_id):
+    if request.method == 'POST' and request.user.is_authenticated:
+        book = get_object_or_404(Book, pk=book_id)
+        rating_value = float(request.POST.get('rating'))
+        Rating.objects.update_or_create(user=request.user, book=book, defaults={'rating': rating_value})
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return redirect('signin')
+
+@login_required
+def user_ratings(request):
+    ratings = Rating.objects.filter(user=request.user).order_by('-created_at')
+    context = {
+        'ratings': ratings
+    }
+    return render(request, 'authentication/user_ratings.html', context)
+
+def add_bookmark(request, book_id):
+    if request.user.is_authenticated:
+        book = get_object_or_404(Book, pk=book_id)
+        Bookmark.objects.get_or_create(user=request.user, book=book)
+        return redirect('book_detail', book_id=book_id)  # Redirect to the book's detail page
+    else:
+        return redirect('signin')
+    
+def list_bookmarks(request):
+    if request.user.is_authenticated:
+        bookmarks = Bookmark.objects.filter(user=request.user).select_related('book')
+        return render(request, 'authentication/bookmarks.html', {'bookmarks': bookmarks})
+    else:
+        return redirect('signin')
+    
+def remove_bookmark(request, book_id):
+    if request.user.is_authenticated:
+        book = get_object_or_404(Book, pk=book_id)
+        Bookmark.objects.filter(user=request.user, book=book).delete()
+        is_bookmarked = Bookmark.objects.filter(user=request.user, book=book).exists()
+
+        # Existing web crawl functionality
+        query = book.title
+        webcrawl = WebCrawl_Search()
+        webcrawl_links = webcrawl.search(query)
+        links = webcrawl.base_url + webcrawl_links[0]
+        
+        # Pass 'book', 'links', and 'is_bookmarked' to the context
+        context = {
+            'book': book,
+            'links': links,
+            'is_bookmarked': is_bookmarked  # Include the is_bookmarked flag
+        }
+
+        next_page = request.GET.get('next') or 'book_detail'
+        return redirect(next_page, book_id=book_id) if next_page == 'book_detail' else redirect(next_page)
+
+        # Redirect back to the book's detail page
+        #return redirect('authentication/book_detail', context)
+    else:
+        return redirect('signin')
+    
+def add_comment(request, book_id):
+    if request.method == 'POST' and request.user.is_authenticated:
+        book = get_object_or_404(Book, pk=book_id)
+        content = request.POST.get('content')
+        Comment.objects.create(user=request.user, book=book, content=content)
+        return HttpResponseRedirect(request.META.get('HTTP_REFERER'))
+    return redirect('signin')
+
+@login_required
+def user_comments(request):
+    comments = Comment.objects.filter(user=request.user).order_by('-created_at')
+    context = {
+        'comments': comments
+    }
+    return render(request, 'authentication/user_comments.html', context)

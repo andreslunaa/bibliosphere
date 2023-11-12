@@ -21,9 +21,42 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
+    .extras-container {
+    background-color: #f8f8f8;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .section-comment-container{
+        background-color: #f8f8f8;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .rating-container{
+        background-color: #ffffff;
+        padding: 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
     .book-details h1, .book-details h3 {
         margin-bottom: 20px;
+        
     }
+
+    .book-details{
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        width: 100%; /* Full width of the parent container */
+        max-width: 800px; /* Maximum width */
+        margin: auto; /* Center align if the parent container is wider */
+    }
+    
 
     .additional-info span {
         display: block;
@@ -43,6 +76,21 @@
         padding: 20px;
         border-radius: 5px;
         box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        width: 100%; /* Full width of the parent container */
+        max-width: 1000px; /* Maximum width */
+        margin: auto; /* Center align if the parent container is wider */
+        margin-top: 10px;
+    }
+
+    .find-book {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        width: 100%; /* Full width of the parent container */
+        max-width: 1000px; /* Maximum width */
+        margin: auto; /* Center align if the parent container is wider */
+        margin-top: 10px;
     }
 
     .read-more-link {
@@ -55,6 +103,60 @@
     .book-additional-content h5 {
         margin-bottom: 15px;
     }
+    .comment-container {
+        background-color: #fff;
+        padding: 15px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 10px;
+    }
+
+    .comment-container strong {
+        color: #007bff;
+    }
+
+    .comment-container small {
+        display: block;
+        color: #777;
+        margin-top: 10px;
+    }
+
+    .comment-form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        margin-top: 20px;
+    }
+
+    .comment-form textarea {
+        width: 100%;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+
+    .comment-form button {
+        background-color: #28a745;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    .book-rating-form button{
+        background-color: #28a745;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+
+    .comment-form button:hover {
+        background-color: #218838;
+    }
    
 </style>
 {% endblock %}
@@ -62,50 +164,127 @@
 
 {% block content %}
 <div class="container book-detail-container">
-
-    <!-- Book Detail Content -->
     <div class="row mt-5">
         <div class="col-md-3">
-            <!-- Book Image -->
             <div class="book-cover">
                 <img src="{{ book.coverImg|default_if_none:'#' }}" alt="Cover image of {{ book.title }}" class="img-fluid">
             </div>
-        </div>
-        <div class="col-md-9 book-details">
-            <!-- Book Title and Author -->
-            <h1>{{ book.title }}</h1>
-            <h3><span>By:</span> {{ book.author }}</h3>
-            <div class="additional-info">
-                <span>Publisher: {{ book.publisher|default:"Publisher not specified" }}</span>
-                <span>Genres: {% for genre in book.genres.all %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
-                <span>Series: {{ book.series|default:"No series information" }}</span>
-                <span>Characters: {{ book.characters|default:"No characters listed" }}</span>
-                <span>Setting: {{ book.setting|default:"Setting not specified" }}</span>
-                <span>No. Pages: {{ book.pages|default:"Page count not available" }}</span>
+            {% if user.is_authenticated %}
+                {% if is_bookmarked %}
+                    <a href="{% url 'remove_bookmark' book.id %}?next={{ request.path }}" style="text-decoration: none; color: white; background-color: #dc3545; padding: 10px 15px; border-radius: 5px; display: inline-block; margin-top: 10px;">Unbookmark this Book</a>
+                {% else %}
+                    <a href="{% url 'add_bookmark' book.id %}" style="text-decoration: none; color: white; background-color: #28a745; padding: 10px 15px; border-radius: 5px; display: inline-block; margin-top: 10px;">Bookmark this Book</a>
+                {% endif %}
+            {% else %}
+                <p style="margin-top: 20px;"><a href="{% url 'signin' %}">Sign in</a> to bookmark this book.</p>
+            {% endif %}
+            <div class="book-rating" style="margin-top: 20px;">
+                <h5>Bibliosphere's Rating:</h5>
+                {% if average_rating %}
+                    <p>Rating: {{ average_rating|floatformat:2 }} / 5.0</p>
+                {% else %}
+                    <p>No one has rated this book, be the first to do it!</p>
+                {% endif %}
             </div>
-        </div>
-    </div>
-
-    <div class="row mt-5 book-additional-content">
-        <div class="col-md-3">
             <h5>Rating: {{ book.rating|default:"No rating" }}</h5>
             <h5>Liked by: {{ book.liked_percent|default:"No data on likes" }}%</h5>
-            <h5>ISBN: {{ book.isbn }}</h5>
-            <h5>Awards: {{ book.awards|default:"No awards listed" }}</h5>
+            <h5>ISBN: {{ book.isbn|floatformat:"0"|cut:"." }}</h5>
+            <h5>Awards:</h5>
+                {% if book.awards %}
+                    <ul id="short-awards" style="height: 100px; overflow: hidden;">
+                        {% for award in book.awards %}
+                            <li>{{ award }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="javascript:void(0);" id="read-more-awards-toggle" class="read-more-link">Read More</a>
+                {% else %}
+                    <p>No awards listed.</p>
+                {% endif %}
         </div>
-        <div class="col-md-9">
+        <div class="col-md-9 ">
+            <div class = "book-details">
+                <h1>{{ book.title }}</h1>
+                <h3><span>By:</span> {{ book.author }}</h3>
+                <div class="additional-info">
+                    <span>Publisher: {{ book.publisher|default:"Publisher not specified" }}</span>
+                    <span>Genres: {% for genre in book.genres.all %}{{ genre.name }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>
+                    <span>Series: {{ book.series|default:"No series information" }}</span>
+                    <span>Characters: {{ book.characters|default:"No characters listed" }}</span>
+                    <span>Setting: {{ book.setting|default:"Setting not specified" }}</span>
+                    <span>No. Pages: {{ book.pages|default:"Page count not available" }}</span>
+                </div>
+            </div>
             <div class="book-description">
+                <h3>Description</h3>
                 <p id="short-description">{{ book.description|truncatewords:50 }}</p>
                 <a href="javascript:void(0);" id="read-more-toggle" class="read-more-link">Read More</a>
                 <div id="full-description" class="collapse">{{ book.description }}</div>
             </div>
+            <div class="find-book">
+                <h2>Find Your Book</h2>
+                {% if links %}
+                    <a href="{{ links }}" target="_blank">Find it in GoodReads</a>
+                {% else %}
+                    <p>No related link found.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
-
 </div>
+
+<div class="container extras-container">
+    <div class="row mt-5">
+        <!-- Rating Column -->
+        <div class="col-md-6">
+            {% if user.is_authenticated %}
+                <div class="book-rating-form" style="margin-top: 20px;">
+                    <h3>Rate this Book</h3>
+                    {% if user_rating %}
+                        <p>You have rated this book: {{ user_rating.rating }}</p>
+                    {% else %}
+                        <form action="{% url 'add_rating' book.id %}" method="post">
+                            {% csrf_token %}
+                            <label for="rating">Your Rating (1-5):</label>
+                            <input type="number" id="rating" name="rating" min="1" max="5" step="0.1" required>
+                            <button type="submit" style="margin-top: 10px;">Submit Rating</button>
+                        </form>
+                    {% endif %}
+                </div>
+            {% else %}
+                <p><a href="{% url 'signin' %}">Sign in</a> to rate this book.</p>
+            {% endif %}
+        </div>
+
+        <!-- Comments Column -->
+        <div class="col-md-6">
+            <h3>Comments</h3>
+            {% for comment in comments %}
+                <div class="comment-container">
+                    <strong>{{ comment.user.username }}</strong>
+                    <p>{{ comment.content }}</p>
+                    <small>Commented on {{ comment.created_at|date:"Y-m-d H:i" }}</small>
+                </div>
+            {% empty %}
+                <p>No comments yet.</p>
+            {% endfor %}
+
+            <!-- Comment Form -->
+            {% if user.is_authenticated %}
+                <div class="comment-form">
+                    <form action="{% url 'add_comment' book.id %}" method="post">
+                        {% csrf_token %}
+                        <textarea name="content" required placeholder="Add a comment..."></textarea>
+                        <button type="submit">Add Comment</button>
+                    </form>
+                </div>
+            {% else %}
+                <p><a href="{% url 'signin' %}">Sign in</a> to add a comment.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
 {% endblock %}
-
-
 
 {% block custom_js %}
 <script>
@@ -130,6 +309,28 @@
                 isExpanded = true;
             }
         });
+
+        var awardsToggleBtn = document.getElementById('read-more-awards-toggle');
+        var shortAwards = document.getElementById('short-awards');
+        var isAwardsExpanded = false;
+
+        if (awardsToggleBtn) {
+            awardsToggleBtn.addEventListener('click', function(event) {
+                if (isAwardsExpanded) {
+                    // Collapse awards list
+                    shortAwards.style.height = '100px';
+                    shortAwards.style.overflow = 'hidden';
+                    awardsToggleBtn.textContent = "Read More";
+                    isAwardsExpanded = false;
+                } else {
+                    // Expand awards list
+                    shortAwards.style.height = 'auto';
+                    shortAwards.style.overflow = 'visible';
+                    awardsToggleBtn.textContent = "Read Less";
+                    isAwardsExpanded = true;
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
