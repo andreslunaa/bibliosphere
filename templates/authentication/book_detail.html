@@ -15,10 +15,11 @@
     height: 50%; 
     }
     .book-detail-container {
-    background-color: #f8f8f8;
-    padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        background-color: #f8f8f8;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        max-width: 1100px; /* Maximum width */
     }
 
     .extras-container {
@@ -157,6 +158,39 @@
     .comment-form button:hover {
         background-color: #218838;
     }
+    /* New styles for unified rating and comments container */
+    .rating-comments-container {
+        background-color: #f8f8f8;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        margin-top: 20px;
+        width: 100%; /* Full width of the parent container */
+        max-width: 1100px; /* Maximum width */
+        margin: auto; /* Center align if the parent container is wider */
+    }
+
+    /* Adjustments to existing classes for consistency */
+    .book-rating-form, .comment-container, .comment-form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        margin-bottom: 20px;
+    }
+
+    /* Adjustments for the "You may also like" section */
+    .recommended-books-container {
+        background-color: #f8f8f8;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        width: 100%; /* Full width of the parent container */
+        max-width: 1100px; /* Maximum width */
+        margin: auto; /* Center align if the parent container is wider */
+        margin-top: 20px;
+    }
+    
    
 </style>
 {% endblock %}
@@ -232,12 +266,12 @@
     </div>
 </div>
 
-<div class="container extras-container">
-    <div class="row mt-5">
+<div class="container rating-comments-container">
+    <div class="row">
         <!-- Rating Column -->
         <div class="col-md-6">
             {% if user.is_authenticated %}
-                <div class="book-rating-form" style="margin-top: 20px;">
+                <div class="book-rating-form">
                     <h3>Rate this Book</h3>
                     {% if user_rating %}
                         <p>You have rated this book: {{ user_rating.rating }}</p>
@@ -283,6 +317,25 @@
         </div>
     </div>
 </div>
+
+
+<div class="container recommended-books-container">
+    <h2 style="text-align: center; margin-bottom: 20px;">You may also like</h2>
+    <div class="book-grid">
+        {% for book in recommended_books %}
+            <div class="book-item">
+                <!-- Use 'coverImg' field for image source -->
+                <img class="book-img" src="{{ book.coverImg }}" alt="Cover image for {{ book.title }}" style="height: 250px;">
+                <a href="{% url 'book_detail' book_id=book.id %}">
+                    <h5>{{ book.title }}</h5>
+                    <p>By: {{ book.author }}</p>
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+
 
 {% endblock %}
 

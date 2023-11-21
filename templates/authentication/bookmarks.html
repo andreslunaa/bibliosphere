@@ -1,4 +1,3 @@
-
 {% extends 'base_generic.html' %}
 
 {% block content %}
@@ -13,6 +12,9 @@
                         <p style="margin-bottom: 10px; color: #555;">Genre: <em>{{ bookmark.book.genres.all|join:", " }}</em></p>
                         <a href="{% url 'book_detail' bookmark.book.id %}" style="text-decoration: none; color: white; background-color: #28a745; padding: 10px 15px; border-radius: 5px; margin-right: 10px;">View Details</a>
                         <a href="{% url 'remove_bookmark' bookmark.book.id %}?next={{ request.path }}" style="text-decoration: none; color: white; background-color: #dc3545; padding: 10px 15px; border-radius: 5px;">Unbookmark</a>
+                        <!-- New button for recommendations -->
+                        <a href="{% url 'recommendations' bookmark.book.id %}" style="text-decoration: none; color: white; background-color: #007bff; padding: 10px 15px; border-radius: 5px;">Get Recommendations</a>
+
                     </li>
                 {% endfor %}
             </ul>

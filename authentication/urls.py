@@ -26,8 +26,6 @@ urlpatterns = [
     path('user-comments/', views.user_comments, name='user_comments'),
     path('add-rating/<int:book_id>/', views.add_rating, name='add_rating'),
     path('user-ratings/', views.user_ratings, name='user_ratings'),
-
-
-
+    path('recommendations/<int:book_id>/', views.recommendation_view, name='recommendations'),
 
 ]

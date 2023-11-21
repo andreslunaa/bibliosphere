@@ -20,6 +20,9 @@ from .web_crawl import WebCrawl_Search
 from django.db.models import Avg
 
 from django.http import HttpResponseRedirect
+from django.shortcuts import render
+from .recommendation import recommend 
+import ast
 # --------------------------------------------------------------------------------
 
 def home(request):
@@ -347,15 +350,19 @@ def book_detail(request, book_id):
     if webcrawl_links:
         links = webcrawl.base_url + webcrawl_links[0]
 
-    # Process awards, characters, setting (accessible to all users)
+   # Process awards, characters, setting (accessible to all users)
     for attr in ['awards', 'characters', 'setting']:
         attr_value = getattr(book, attr, '')
         if attr_value:
             if attr == 'awards':
-                # Specific processing for awards
-                awards_str = attr_value.strip("[]")
-                awards_list = [award.strip().strip("'\"") for award in awards_str.split(',')]
-                setattr(book, attr, [award for award in awards_list if award])
+                # Parse the awards list
+                # Assuming the awards are stored as a string that looks like a list of strings
+                try:
+                    awards_list = ast.literal_eval(attr_value)
+                except (ValueError, SyntaxError):
+                    # Handle the case where the string cannot be parsed as a list
+                    awards_list = []
+                setattr(book, attr, awards_list)
             else:
                 # General processing for characters and setting
                 clean_str = attr_value.strip("[]").replace("'", "")
@@ -371,12 +378,17 @@ def book_detail(request, book_id):
     if request.user.is_authenticated:
         is_bookmarked = Bookmark.objects.filter(user=request.user, book=book).exists()
 
+    print(book.title)
+    recommended_ids = recommend(book)
+    recommended_books = Book.objects.filter(id__in=recommended_ids)
+
     context = {
         'book': book,
         'links': links,
         'comments': comments,
         'average_rating': average_rating,
-        'is_bookmarked': is_bookmarked
+        'is_bookmarked': is_bookmarked,
+        'recommended_books': recommended_books
     }
 
     return render(request, 'authentication/book_detail.html', context)
@@ -454,6 +466,22 @@ def user_comments(request):
         'comments': comments
     }
     return render(request, 'authentication/user_comments.html', context)
+
+
+def recommendation_view(request, book_id):
+    # Retrieve the book title using the book_id
+    bookmarked_book = Book.objects.get(id=book_id).title
+
+    # Call the recommend function
+    recommended_books = recommend(bookmarked_book)
+
+    # Render the recommended books in a template
+    return render(request, 'authentication/recommendations.html', {'recommended_books': recommended_books})
+
+
+
+
+
 
 
 
