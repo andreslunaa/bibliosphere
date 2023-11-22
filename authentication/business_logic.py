@@ -106,7 +106,7 @@ def recommend(book):
         return []
 
 
-def get_books_around_id(target_id, radius=5000, max_books=10000):
+def get_books_around_id(target_id, radius=2000, max_books=4000):
     # Get the lowest and highest book ID in the dataset
     start_time = time.time()
     lowest_id = Book.objects.order_by('id').first().id if Book.objects.exists() else 0
@@ -129,7 +129,6 @@ def get_books_around_id(target_id, radius=5000, max_books=10000):
     execution_time = end_time - start_time  # Calculate total execution time
     print(f"Execution time func 1: {execution_time} seconds")
     return books
-
 
 class WebCrawl_Search:
     def __init__(self):

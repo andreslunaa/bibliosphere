@@ -23,24 +23,18 @@ from django.shortcuts import render
 import ast
 
 from .business_logic import find_books, WebCrawl_Search, recommend 
-
+from django.db.models import Q
 ################################################################################################################################
 
 def home(request):
-    """
-    Renders the home page of the website with a list of books based on the user's preferred genres or search query.
 
-    Args:
-        request (HttpRequest): The HTTP request object.
-
-    Returns:
-        HttpResponse: Rendered home page with a list of books.
-    """
     query = request.GET.get('search')
     books_by_genre = {}
 
     if query:
-        books = Book.objects.filter(title__icontains=query)
+        books = Book.objects.filter(
+            Q(title__icontains=query) | Q(author__icontains=query)
+        )
         return render(request, 'authentication/index.html', {'books': books})
 
     if request.user.is_authenticated:
