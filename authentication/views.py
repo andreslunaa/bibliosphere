@@ -16,14 +16,15 @@ from bibliosphere import settings
 from .models import Book, UserProfile, Genre, Bookmark, Comment, Rating
 import random
 from django.db import IntegrityError
-from .web_crawl import WebCrawl_Search
 from django.db.models import Avg
 
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
-from .recommendation import recommend 
 import ast
-# --------------------------------------------------------------------------------
+
+from .business_logic import find_books, WebCrawl_Search, recommend 
+
+################################################################################################################################
 
 def home(request):
     """
@@ -162,46 +163,6 @@ def signout(request):
     messages.success(request, "You have been successfully signed out!")
     return redirect('home')
 
-def find_books(request):
-    books_by_genre = {}
-    # Get preferred_genres from UserProfile
-    user_profile = UserProfile.objects.get(user=request.user)
-    selected_genres = list(user_profile.preferred_genres.values_list('name', flat=True))
-
-    for genre in selected_genres:
-        genre_books = Book.objects.filter(genres__name__icontains=genre).order_by('?')[:7]
-        if genre_books.count() < 7:
-            additional_books_needed = 7 - genre_books.count()
-            other_books = Book.objects.exclude(id__in=[book.id for book in genre_books]).order_by('?')[:additional_books_needed]
-            genre_books = list(genre_books) + list(other_books)
-        books_by_genre[genre] = genre_books
-    return books_by_genre
-
-def activate(request, uidb64, token):
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = User.objects.get(pk=uid)  # Fetch the User first
-        user_profile = user.userprofile  # Assuming the reverse relation from User to UserProfile is 'userprofile'
-    except(TypeError, ValueError, OverflowError, User.DoesNotExist):
-        user_profile = None
-
-    if user_profile is not None and generater_token.check_token(user_profile.user, token):
-        user = user_profile.user
-        user.is_active = True
-        user.save()
-        login(request, user) 
-        return render(request,'authentication/index.html', { 'fname': user.first_name })
-    else:
-        return render(request,'activation_failed.html')
-
-def saved_information(request):
-    user_profile, created = UserProfile.objects.get_or_create(user=request.user)
-    preferred_genres = user_profile.preferred_genres.all().order_by('name')
-    return render(request, 'authentication/saved_information.html', {
-        'user': request.user,
-        'preferred_genres': preferred_genres
-    })
-
 def preferred_genres(request):
     user = request.user
     context = {}
@@ -334,7 +295,7 @@ def edit_user_info(request):
         except IntegrityError as e:
             messages.error(request, 'There was an error updating your profile. Please try again.')
 
-        return redirect('saved_information')  # Replace with your appropriate view name
+        return redirect('saved_information')
 
     return render(request, 'authentication/edit_info.html')
 
@@ -466,7 +427,6 @@ def user_comments(request):
         'comments': comments
     }
     return render(request, 'authentication/user_comments.html', context)
-
 
 def recommendation_view(request, book_id):
     # Retrieve the book title using the book_id

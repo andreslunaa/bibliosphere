@@ -1,15 +1,16 @@
 from django.contrib import admin
 from django.urls import include, path
-from . import views
+from . import views, business_logic
+
 #urls.py
 urlpatterns = [
     path('', views.home, name = 'home'),
     path('signup', views.signup, name ='signup'),
     path('signin', views.signin, name ='signin'),
     path('signout', views.signout, name ='signout'),
-    path('activate/<uidb64>/<token>', views.activate, name ='activate'),
+    path('activate/<uidb64>/<token>', business_logic.activate, name ='activate'),
     #Access user's personal information
-    path('saved_information/', views.saved_information, name='saved_information'),
+    path('saved_information/', business_logic.saved_information, name='saved_information'),
     # Add Preferred Genres
     path('preferred_genres/', views.preferred_genres, name='preferred_genres'),
     path('search_genres2/', views.search_and_select_genres, name='search_genres2'),
