@@ -24,7 +24,10 @@ import ast
 
 from .business_logic import find_books, WebCrawl_Search, recommend 
 from django.db.models import Q
+from algoliasearch.search_client import SearchClient
+from django.conf import settings
 ################################################################################################################################
+
 
 def home(request):
 
@@ -32,9 +35,16 @@ def home(request):
     books_by_genre = {}
 
     if query:
-        books = Book.objects.filter(
-            Q(title__icontains=query) | Q(author__icontains=query)
-        )
+        # Initialize Algolia client and index
+        client = SearchClient.create(settings.ALGOLIA['APPLICATION_ID'], settings.ALGOLIA['API_KEY'])
+        index = client.init_index('bibliosphere')
+
+        # Perform search on Algolia
+        algolia_results = index.search(query)
+
+        # Extract book information from results
+        books = [hit for hit in algolia_results['hits']]
+        
         return render(request, 'authentication/index.html', {'books': books})
 
     if request.user.is_authenticated:

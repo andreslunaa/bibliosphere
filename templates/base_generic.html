@@ -18,6 +18,9 @@
             background-attachment: fixed;
             background-position: center center;
         }
+        body {
+            padding-top: 60px;
+        }
 
         body::before {
             content: "";
@@ -37,6 +40,7 @@
 
         .navbar {
             background-color: black;
+            z-index: 1030;
         }
 
         .navbar a, .navbar button {
@@ -115,6 +119,7 @@
         }
 
         /* Add additional styles that don't conflict with those in the child templates */
+    
     </style>
     
     {% block custom_css %}{% endblock %}

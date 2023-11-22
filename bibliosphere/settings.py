@@ -15,10 +15,9 @@ from . info import *
 import os
 
 
-ELASTICSEARCH_DSL = {
-    'default': {
-        'hosts': 'localhost:9200'
-    },
+ALGOLIA = {
+    'APPLICATION_ID': 'ENG0HIVPNE',
+    'API_KEY': '57da8a1d252ef8d84abd2674631cc9e3'
 }
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
