@@ -138,15 +138,6 @@ def signup(request):
     return render(request, 'authentication/signup.html', {'genres': genres})
 
 def signin(request):
-    """
-    Handles the user login functionality.
-
-    Args:
-        request (object): The HTTP request object containing the user's login information.
-
-    Returns:
-        None: The function either logs in the user and renders the home page or redirects the user to the home page with an error message.
-    """
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('pass1')
@@ -155,6 +146,7 @@ def signin(request):
         if user is not None:
             login(request, user)
             books_by_genre = find_books(request)
+            messages.success(request, "You have been successfully signed in!")
             return render(request, 'authentication/index.html', {'books_by_genre': books_by_genre})
         else:
             messages.error(request, "Invalid Credentials!")
