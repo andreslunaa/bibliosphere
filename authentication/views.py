@@ -43,8 +43,10 @@ def home(request):
         algolia_results = index.search(query)
 
         # Extract book information from results
+        # Extract book information from results
         books = [hit for hit in algolia_results['hits']]
-        
+
+        # Now you can render the template with books grouped by title and cover image
         return render(request, 'authentication/index.html', {'books': books})
 
     if request.user.is_authenticated:
