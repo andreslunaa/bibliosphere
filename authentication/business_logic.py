@@ -106,7 +106,7 @@ def recommend(book):
         return []
 
 
-def get_books_around_id(target_id, radius=2000, max_books=4000):
+def get_books_around_id(target_id, radius=1500, max_books=3000):
     # Get the lowest and highest book ID in the dataset
     start_time = time.time()
     lowest_id = Book.objects.order_by('id').first().id if Book.objects.exists() else 0
@@ -129,6 +129,75 @@ def get_books_around_id(target_id, radius=2000, max_books=4000):
     execution_time = end_time - start_time  # Calculate total execution time
     print(f"Execution time func 1: {execution_time} seconds")
     return books
+
+
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import pandas as pd
+
+import random
+
+def recommend_based_on_genres(user_profile):
+    start_time = time.time()
+
+    # Extract preferred genres for the user
+    preferred_genres = ' '.join(genre.name for genre in user_profile.preferred_genres.all())
+
+    # Determine the total number of books matching the preferred genres
+    total_books_count = Book.objects.filter(genres__name__in=user_profile.preferred_genres.values_list('name', flat=True)).distinct().count()
+
+    # Calculate the size of each section
+    section_size = total_books_count // 4
+
+    # Initialize an empty queryset
+    queryset = Book.objects.none()
+
+    # Randomly sample 250 books from each section
+    for i in range(4):
+        start = i * section_size
+        end = start + section_size
+        section_queryset = Book.objects.filter(genres__name__in=user_profile.preferred_genres.values_list('name', flat=True), id__range=(start, end)).distinct().order_by('?')[:250]
+        queryset = queryset | section_queryset
+
+    # Limit the queryset to 1000 books
+    queryset = queryset[:1000]
+
+    # Prepare DataFrame including book IDs and genres
+    book_data = [{
+        'id': book.id,
+        'title': book.title,
+        'author': book.author,
+        'genres': ' '.join(genre.name for genre in book.genres.all())
+    } for book in queryset]
+    df = pd.DataFrame(book_data)
+
+    # Combine genres
+    df["combined_genres"] = df['genres']
+
+    # Vectorize combined genres
+    cv = CountVectorizer()
+    genre_matrix = cv.fit_transform(df["combined_genres"])
+
+    # Vectorize preferred genres
+    preferred_genre_matrix = cv.transform([preferred_genres])
+
+    # Calculate cosine similarity
+    cosine_sim = cosine_similarity(preferred_genre_matrix, genre_matrix)
+
+    # Get book recommendations
+    similar_books = list(enumerate(cosine_sim[0]))
+    sorted_similar_books = sorted(similar_books, key=lambda x: x[1], reverse=True)
+
+    # Get up to 10 recommended book IDs
+    recomlist = [df['id'][sorted_similar_books[i][0]] for i in range(1, 11)]
+
+    end_time = time.time()  # End time measurement
+    execution_time = end_time - start_time  # Calculate total execution time
+    print(f"Execution time: {execution_time} seconds")
+
+    return recomlist
+
+
 
 class WebCrawl_Search:
     def __init__(self):

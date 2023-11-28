@@ -5,12 +5,23 @@
 {% block custom_css %}
     <style>
         /* Add additional styles specific to the index page */
-        /* For example, you can add styles for the content within the block content */
         .custom-style {
             color: blue;
         }
         .alert {
             background-color: white; /* or any other contrasting color */
+        }
+        .recommended-books {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        .recommended-books h2 {
+            color: #fff; /* Adjust this color to contrast with your wallpaper */
+            text-shadow: 0px 0px 3px rgba(0, 0, 0, 0.9); /* Black shadow for readability */
+            background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black background */
+            display: inline; /* Allows the background to fit the text */
+            padding: 5px; /* Some padding around the text */
+            margin-bottom: 20px;
         }
     </style>
 {% endblock custom_css %}
@@ -25,6 +36,23 @@
                 </button>
             </div>
         {% endfor %}
+
+        {% if recommended_books %}
+            <div class="recommended-books">
+                <h2>Recommended for You</h2>
+                <div class="book-grid">
+                    {% for book in recommended_books %}
+                        <div class="book-item custom-style">
+                            <img class="book-img" src="{{ book.coverImg }}" alt="Cover image for {{ book.title }}">
+                            <a href="{% url 'book_detail' book_id=book.id %}">
+                                <h5>{{ book.title }}</h5>
+                                <p>By: {{ book.author }}</p>
+                            </a>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
     
         {% if books %}
             <!-- Displaying search results -->

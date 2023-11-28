@@ -22,7 +22,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import render
 import ast
 
-from .business_logic import find_books, WebCrawl_Search, recommend 
+from .business_logic import find_books, WebCrawl_Search, recommend, recommend_based_on_genres
 from django.db.models import Q
 from algoliasearch.search_client import SearchClient
 from django.conf import settings
@@ -33,7 +33,7 @@ def home(request):
 
     query = request.GET.get('search')
     books_by_genre = {}
-
+    recommended_books = []
     if query:
         # Initialize Algolia client and index
         client = SearchClient.create(settings.ALGOLIA['APPLICATION_ID'], settings.ALGOLIA['API_KEY'])
@@ -49,18 +49,30 @@ def home(request):
         # Now you can render the template with books grouped by title and cover image
         return render(request, 'authentication/index.html', {'books': books})
 
-    if request.user.is_authenticated:
+    elif request.user.is_authenticated:
+        # Get user's profile and preferred genres
         user_profile = UserProfile.objects.get(user=request.user)
         selected_genres = list(user_profile.preferred_genres.values_list('name', flat=True))
+
+        # Use the recommend_based_on_genres function to get recommended books
+        recommended_books_ids = recommend_based_on_genres(user_profile)
+        recommended_books = Book.objects.filter(id__in=recommended_books_ids)
     else:
+        # For unauthenticated users, select random genres and generate random books
         selected_genres = random.sample(list(Genre.objects.values_list('name', flat=True)), 5)
 
-    genre_books = Book.objects.filter(genres__name__in=selected_genres).order_by('?')
+    # Get books for each selected genre
+    genre_books = Book.objects.filter(genres__name__in=selected_genres).distinct()
     for genre_name in selected_genres:
-        books_by_genre[genre_name] = genre_books.filter(genres__name=genre_name)[:7]
+        books_by_genre[genre_name] = genre_books.filter(genres__name=genre_name).order_by('?')[:7]
 
+    # Combine the context for both selected genres and recommended books
+    context = {
+        'books_by_genre': books_by_genre,
+        'recommended_books': recommended_books
+    }
 
-    return render(request, 'authentication/index.html', {'books_by_genre': books_by_genre})
+    return render(request, 'authentication/index.html', context)
 
 def signup(request):
     if request.method == "POST":
